@@ -47,10 +47,11 @@ section .text
        
        else:
 		 call open; Abro el archivo.
+		 call read; Leo el archivo.
 		 jmp volcar
 		 
 	     volcar:
-		   call read; Leo el archivo.
+		   mov eax,[bufffer]
 		   cmp eax,04
 		   je closeAndExit
 		   call calculateHexadecimal; calculo la expresion hexadecimal.
