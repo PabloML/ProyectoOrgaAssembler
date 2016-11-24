@@ -1,11 +1,13 @@
 section .bss
    resb buffer 1048576; Variable donde cargare cada linea binaria.
-  
+   resb lineHex 32; Variable donde cargare cada linea en hexadecimal.
 
 section .data
    help db 'Programa para volcar el contenido de un archivo en formato hexadecimal y ASCII. Se detallan formato y opciones de invocacion: Sintaxis: $ volcar [ -h ] < archivo_entrada > Los parametros entre corchetes denotan parametros opcionales. Las opciones separadas por < > denotan parámetros obligatorios. -h muestra un mensaje de ayuda (este mensaje). archivo_entrada sera el archivo cuyo contenido será volcado por pantalla segun el siguiente formato. El programa toma el contenido del archivo de entrada y mostrarlo por pantalla organizado de la siguiente forma: [Dirección base] [Contenido hexadecimal] [Contenido ASCII] La salida se organiza en filas de a 16 bytes. La primera columna muestra la dirección base de los siguientes 16 bytes, expresada en hexadecimal. Luego siguen 16 columnas que muestran el valor de los siguientes 16 bytes del archivo a partir de la dirección base, expresados en hexadecimal. La última columna (delimitada por caracteres ‘|’) de cada fila muestra el valor de los mismos 16 bytes, pero expresados en formato ASCII, mostrando sólo los caracteres imprimibles, e indicando la presencia de caracteres no imprimibles con ‘.’). Si no se especifica archivo alguno, la terminación será anormal, mostrando un 3. Para mas informacion, consulte la documentacion del programa.', 10,
    longHelp equ $ - help
    hex db 123456789ABCDEF
+   cont db 0
+   
 section .text
    global _start
    
@@ -45,9 +47,15 @@ section .text
        
        else:
 		 call open; Abro el archivo.
-		 call read; Leo el archivo.
-		 call calculateHexadecimal; calculo la expresion hexadecimal.
+		 jmp volcar
 		 
+	     volcar:
+		   call read; Leo el archivo.
+		   cmp eax,04
+		   je closeAndExit
+		   call calculateHexadecimal; calculo la expresion hexadecimal.
+		   jmp volcar
+		   
 		 open:
            mov eax,5
            pop ebx; Desapilo el segundo archivo.
@@ -65,6 +73,29 @@ section .text
            ret
          
          calculateHexadecimal:
-           	mov ecx,buffer; Cargo el primerbyte en ecx.
+           	mov bl,buffer; Cargo el primerbyte en ecx.
+			mov dl,[bl]
+			and dl,0Fh
+			add hex,dl
+            mov dl,[hex]			
+			mov dh,[bl]
+			sar dh,4
+			mov lineHex,dh; decena del primer byte leido.
+			inc lineHex
+			mov lineHex,dl; Unidad del primer byte leido.
+			inc buffer
+			inc lineHex
+		 	ret
+		 
+         closeAndExit:
+           	mov eax,6
+            mov ebx,[ecx]
+            int 80h
+            jmp exit
+        
+         exit:
+           mov eax,1
+           mov ebx,0
+           int 80h		   
 			
             			
