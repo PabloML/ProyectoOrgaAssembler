@@ -1,11 +1,11 @@
 section .bss
-   resb buffer 16; Variable donde cargare cada linea binaria.
-   resb bufferH 16; Variable para cargar los valores hexadecimales.
+   resb buffer 1048576; Variable donde cargare cada linea binaria.
+  
 
 section .data
    help db 'Programa para volcar el contenido de un archivo en formato hexadecimal y ASCII. Se detallan formato y opciones de invocacion: Sintaxis: $ volcar [ -h ] < archivo_entrada > Los parametros entre corchetes denotan parametros opcionales. Las opciones separadas por < > denotan parámetros obligatorios. -h muestra un mensaje de ayuda (este mensaje). archivo_entrada sera el archivo cuyo contenido será volcado por pantalla segun el siguiente formato. El programa toma el contenido del archivo de entrada y mostrarlo por pantalla organizado de la siguiente forma: [Dirección base] [Contenido hexadecimal] [Contenido ASCII] La salida se organiza en filas de a 16 bytes. La primera columna muestra la dirección base de los siguientes 16 bytes, expresada en hexadecimal. Luego siguen 16 columnas que muestran el valor de los siguientes 16 bytes del archivo a partir de la dirección base, expresados en hexadecimal. La última columna (delimitada por caracteres ‘|’) de cada fila muestra el valor de los mismos 16 bytes, pero expresados en formato ASCII, mostrando sólo los caracteres imprimibles, e indicando la presencia de caracteres no imprimibles con ‘.’). Si no se especifica archivo alguno, la terminación será anormal, mostrando un 3. Para mas informacion, consulte la documentacion del programa.', 10,
    longHelp equ $ - help
-   
+   hex db 123456789ABCDEF
 section .text
    global _start
    
@@ -26,9 +26,14 @@ section .text
 	   
 	   then:
 	     pop ebx; Desapilo el primer argumento.
-		 cmp ebx,'-h'; Si el primer argumento es -h
+		 mov ecx, [ebx]
+	     cmp cl, '-' ; Si el primer argumento tiene un -
+		 jne error
+		 inc ebx ; Se saltea el '-'.
+	     mov ecx, [ebx]
+	     cmp cl, 'h'
 		 je printHelp; imprimo la ayuda.
-		 jmp error;sino termino con error.
+		 jmp error
 		 
 	     printHelp:
 	       mov eax,4; Imprimo
@@ -46,16 +51,20 @@ section .text
 		 open:
            mov eax,5
            pop ebx; Desapilo el segundo archivo.
+		   mov ecx,O_RDONLY
            int 80h
+		   mov ecx,eax; Guardo el indicador del archivo para luego leerlo y escribirlo.
            ret
          
          read:
            mov eax,3
+		   mov ebx,[ecx]
            mov ecx,buffer
-           mov edx,16
+           mov edx,1048576
            int 80h
            ret
          
          calculateHexadecimal:
-           	mov ecx,buffer[0]; Cargo el primerbyte en ecx.
+           	mov ecx,buffer; Cargo el primerbyte en ecx.
+			
             			
