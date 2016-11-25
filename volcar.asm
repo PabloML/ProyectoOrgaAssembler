@@ -79,6 +79,8 @@ section .text
            pop ebx; Desapilo el segundo archivo.
 		   mov ecx,'0_RDONLY'
            int 80h
+		   cmp eax,0
+		   jl error
 		   mov ecx,eax; Guardo el indicador del archivo para luego leerlo y escribirlo.
            ret
          
