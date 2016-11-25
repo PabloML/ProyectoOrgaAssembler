@@ -3,7 +3,6 @@ section .bss
    lineHex resb 32; Variable donde cargare cada linea en hexadecimal.
 
 section .data
-<<<<<<< HEAD
    help db "Programa para volcar el contenido de un archivo en formato hexadecimal y ASCII.", 10,
       db "Se detallan formato y opciones de invocacion: ", 10,
       db "Sintaxis: $ volcar [ -h ] < archivo_entrada >", 10,
@@ -25,12 +24,6 @@ section .data
    longHelp equ $ - help; largo de la ayuda.
    hex db '123456789ABCDEF'; Arreglo para hacer maeo de hexadecimales.
    cont db 0h; Contador de direcciones.
-=======
-   help db 'Programa para volcar el contenido de un archivo en formato hexadecimal y ASCII. Se detallan formato y opciones de invocacion: Sintaxis: $ volcar [ -h ] < archivo_entrada > Los parametros entre corchetes denotan parametros opcionales. Las opciones separadas por < > denotan parámetros obligatorios. -h muestra un mensaje de ayuda (este mensaje). archivo_entrada sera el archivo cuyo contenido será volcado por pantalla segun el siguiente formato. El programa toma el contenido del archivo de entrada y mostrarlo por pantalla organizado de la siguiente forma: [Dirección base] [Contenido hexadecimal] [Contenido ASCII] La salida se organiza en filas de a 16 bytes. La primera columna muestra la dirección base de los siguientes 16 bytes, expresada en hexadecimal. Luego siguen 16 columnas que muestran el valor de los siguientes 16 bytes del archivo a partir de la dirección base, expresados en hexadecimal. La última columna (delimitada por caracteres ‘|’) de cada fila muestra el valor de los mismos 16 bytes, pero expresados en formato ASCII, mostrando sólo los caracteres imprimibles, e indicando la presencia de caracteres no imprimibles con ‘.’). Si no se especifica archivo alguno, la terminación será anormal, mostrando un 3. Para mas informacion, consulte la documentacion del programa.', 10
-   longHelp equ $ - help
-   hex db '123456789ABCDEF'
-   cont db 0
->>>>>>> origin/master
    
 section .text
    global _start
@@ -84,11 +77,7 @@ section .text
 		 open:
            mov eax,5
            pop ebx; Desapilo el segundo archivo.
-<<<<<<< HEAD
 		   mov ecx,'0_RDONLY'
-=======
-		   mov ecx,0_RDONLY
->>>>>>> origin/master
            int 80h
 		   mov ecx,eax; Guardo el indicador del archivo para luego leerlo y escribirlo.
            ret
