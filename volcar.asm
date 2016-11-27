@@ -6,7 +6,7 @@
 ;enlazar:
 ;	$ ld -o volcar volcar.o
 ;ejecutar:
-;	$ ./volcar [parametros]
+;	$ ./volcar [parametro] <archivo>
 ;-----------------------------------------------------------------------
 
 %define hex_offset 8
