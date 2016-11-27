@@ -13,36 +13,38 @@
 %define char_offset 58
 
 section .data
-  ;El siguiente formato es el que va a tener la linea de salida.
+  ;formato de la linea de salida.
   linea db "000000  hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh  |................|"
-  long_Linea equ $ - linea ; Tamaño de la linea
-  ultima_Linea_Buffer db "000000"			;Buffer para escribir la ultima vez la cantidad de elementos leidos
+  long_Linea equ $ - linea ; 				Tamaño de la linea
+  ultima_Linea_Buffer db "000000"			;Buffer para escribir la ultima vez la 
+											;cantidad de elementos leidos
   long_buffer_ultLinea equ $ - ultima_Linea_Buffer
-
-  cant_caract_Leidos dd 0				;cantidad de caracteres leidos del archivo
-  cont_lineas dd 0 			;contador de lineas
-  hex_pos dd hex_offset			;offset a la posicion de la linea para insertar la representacion hexadecim
-  pos_caracter_en_linea dd char_offset		;offset a la posicion de la linea donde insertar el char
-
-
-  salto db 10				;"\n"
-  barra db 7ch				;"|"
-  resto dd 0				;Diferencia entre el cont_lineas y la cantidad de lineas
+  cont_lineas dd 0 						;contador de lineas
+  
+  cant_caract_Leidos dd 0				;cantidad de caracteres leidos hasta el momento.
+  pos_caracter_en_linea dd char_offset	;offset a la posicion de la linea donde insertar el char
+  hex_pos dd hex_offset					;offset a la posicion de la linea para insertar 
+										;la representacion hexadecimal
+  salto db 10							;"\n"
+  barra db 7ch							;"|"
+  resto dd 0							;Diferencia entre el cont_lineas y la cantidad de lineas
 
   ;Mensaje de ayuda que se imprimira por pantalla con el argumento -h.
   help db "Programa para volcar el contenido de un archivo en formato hexadecimal y ASCII.", 10,
-      db "Se detallan formato y opciones de invocacion: ", 10,
+      db "                                              ",10,
+	  db "Se detallan formato y opciones de invocacion: ", 10,
       db "Sintaxis: $ volcar [ -h ] < archivo_entrada >", 10,
       db "Los parametros entre corchetes denotan parametros opcionales.",10,
 	  db "Las opciones separadas por < > denotan parámetros obligatorios.", 10,
       db "La opcion '-h' muestra un mensaje de ayuda (este mensaje).", 10,
-      db "archivo_entrada sera el archivo cuyo contenido será volcado por ",10,
-	  db "pantalla segun el siguiente formato", 10,
-      db "El programa toma el contenido del archivo de entrada y mostrarlo por pantalla",10,
+      db "El programa toma el contenido del <archivo_entrada> y lo muestra por pantalla",10,
       db "organizado de la siguiente forma:",10,
-      db "    [Dirección base] [Contenido hexadecimal] [Contenido ASCII]    ", 10,
-	  db "La salida se organiza en filas de a 16 bytes. La primera columna muestra", 10 ,
-	  db "la dirección base de los siguientes 16 bytes, expresada en hexadecimal.", 10,
+      db "                                                                  ",10,
+	  db "    [Dirección base] [Contenido hexadecimal] [Contenido ASCII]    ", 10,
+	  db "                                                                  ",10,
+	  db "La salida se organiza en filas de a 16 bytes.",10 
+	  db "La primera columna muestra la dirección base de los siguientes 16 bytes",10, 
+	  db "expresada en hexadecimal.", 10,
 	  db "Luego siguen 16 columnas que muestran el valor de los siguientes 16 bytes", 10,
 	  db "del archivo a partir de la dirección base, expresados en hexadecimal.", 10,
       db "La última columna (delimitada por caracteres ‘|’) de cada fila muestra el", 10,
@@ -56,7 +58,7 @@ section .data
 
 section .bss
 
-  buffer_ArchivoInput: resb 1048576		;Este es el buffer donde se guarda el archivo
+  buffer_ArchivoInput: resb 1048576		;Se reserba 1mb en el buffer donde se guardará el archivo.
 	
 section .text
 
@@ -64,38 +66,57 @@ global _start
 
 _start:
 
-;Miro la cantidad de parametros
+;Controlo la cantidad de parametros
 
-	pop eax	; eax=cantidad de argumentos del programa.
-	pop ebx	; ebx=nombre del programa, se descarta. 
-	dec eax	; Se descuenta 1 para no tener en cuenta el nombre del programa. 
-			; Solo se consideran aquellos parametros dados por el usuario.
-	cmp eax, 0				; 0 parametros?
-	je 	tNormal			; No se imprime nada, terminación normal.
+	pop eax			; eax=cantidad de argumentos del programa.
+	pop ebx			; ebx=nombre del programa, se descarta. 
+	dec eax			; Se descuenta 1 para no tener en cuenta el nombre del programa. 
+					; Solo se consideran aquellos parametros dados por el usuario.
+	cmp eax, 0		; 0 parametros?
+	je 	tNormal		; No se imprime nada, terminación normal.
 							 
 	; Se pasa a determinar si tiene 1 o mas argumentos.
 	cmp eax, 1
-	je unArg	
-	jg tErrorOtro	; El maximo n de argumentos es 1,si supera esta cantidad, es error.
+	je unArg
+    cmp eax, 2	
+	je	dosArgs		
+	jg tAnormal	; El maximo n de argumentos que se pueden ingresar a la vez es 1,si supera 
+					; esta cantidad se provoca una salida con error.
 
 ;-----------------------------------------------------------------------
 unArg:
 	pop ebx	; Se extrae el argumento ingresado. 
 	mov ecx, [ebx]
-	cmp cl, '-'
-	je .continuar
+	cmp cl, '-'				;Controlo si es un "-"
+	je .continuar			;Si es un "-" , sigo leyendo el argumento.
 	
 	jne	open_file    		; Si no hay un '-' solo puede haber un path
 							; de archivo.
 	.continuar								
 	inc ebx			; Se saltea el '-'.
 	mov ecx, [ebx]
-	cmp cl, 'h'
-	je mostrarAyuda
+	cmp cl, 'h'		; Compruebo si es un "-h"
+	je mostrarAyuda ; Caso positivo, muestro ayuda
 	
-	jne tErrorOtro	; Sino es un -x para consola con numeracion hex, ya es error.
+	jne tAnormal	; Caso contrario, muestro error.
 
 ;--------------------------------------------------------------------------	
+dosArgs:
+	pop ebx			; Se extrae 1er argumento ingresado. 
+	mov ecx, [ebx]
+	cmp cl, '-'     ; Controlo si es un "-"   
+	je .continuar2
+	
+	jne open_file	; Sino hay un '-' tienen que ser el path de un archivo.
+	
+	.continuar2
+	inc ebx			; Se saltea el '-'.
+	mov ecx, [ebx]
+	cmp cl, 'h'
+	je mostrarAyuda	;Si es un "-h" muestro ayuda y se provoca una salida normal.
+	jne tAnormal	;Si no es "-h" significa que el parametro es incorrecto.
+;------------------------------------------------------------------------------	
+
 open_file:
 
 ;Abro el archivo que tiene el texto a imprimir
@@ -130,38 +151,39 @@ read_line:
 ; la posicion n se le suma "n" a la posicion inicial un cont_lineas de caracteres.
 
 	mov EBX,buffer_ArchivoInput		;Pongo en EbX la direccion inicial del buffer
-	add EBX,[cont_lineas]				;Le sumo el cont_lineas 
+	add EBX,[cont_lineas]			;Le sumo el cont_lineas 
 	mov CL,[EBX]					;Copio el caracter almacenado en EBX.
 	push ECX						;Guardo el caracter
 
 ;Se escribe el caracter leido en la posicion correspondiente.
 	mov EAX,linea			 		;Se carga en EAX la direccion inicial de la linea.
-	add EAX,[pos_caracter_en_linea]		 ;Luego se le suma el Offset.
+	add EAX,[pos_caracter_en_linea]	;Luego se le suma el Offset.
 	call caracter_o_punto 			;Esta llamada a funcion retorna un caracter imprimible,
 									;lo que significa que dado un caracter, si este es imprimible
 									;lo retorna y si no es imprimible retorna un punto '.'.
 	 
-	mov [EAX],CL			 ;Se crea una copia del caracter leido
+	mov [EAX],CL					;Se crea una copia del caracter leido
 
-	pop ECX					 ;Se elimina el caracter leido.
+	pop ECX					 		;Se elimina el caracter leido.
 
-	mov EAX,linea			 ;Guardamos la posicion inicial de la linea actual.
-	add EAX,[hex_pos]		 ;se le suma el offset.
-	call convertir_a_Hexa	 ;Esta funcion retorna la representacion hexadecimal del 
-							 ;caracter que recibe como parametro.
+	mov EAX,linea					;Guardamos la posicion inicial de la linea actual.
+	add EAX,[hex_pos]		 		;se le suma el offset.
+	call convertir_a_Hexa	 		;Esta funcion retorna la representacion hexadecimal del 
+									;caracter que recibe como parametro.
 	
-	mov [EAX],CX			 ;Finalmente se lo escribe (agrega) en la linea.
+	mov [EAX],CX			 		;Finalmente se lo escribe (agrega) en la linea.
 
 
-	inc DWORD [pos_caracter_en_linea]	;Se incrementa la posicion en la linea, donde se va a escribir el proximo caracter.
+	inc DWORD [pos_caracter_en_linea]	;Se incrementa la posicion en la linea, donde se va a escribir 
+										;el proximo caracter.
 	add [hex_pos],DWORD 3				;Incremento la posicion donde escribir el hexa en la linea
 
 ;Se suma 1 al cont_lineas, luego se controla si es EOF, en este caso se deja de leer.
 	
 	inc DWORD [cont_lineas]	
-	mov EAX,[cont_lineas]		;Aca se lo mueve a EAX con el objetivo de poder comparar luego.
+	mov EAX,[cont_lineas]				;Aca se lo mueve a EAX con el objetivo de poder comparar luego.
 	cmp [cant_caract_Leidos],EAX		;Si el cont_lineas es igual a la cantidad de caracteres leidos.
-	je Eof					;salto a Eof
+	je Eof								;salto a Eof
 
 ;Si el cont_lineas es 16 o multiplo de 16, se imprime la linea y se vuelve al formato inicial.
 	
@@ -174,7 +196,7 @@ read_line:
 
 	jmp read_line		;Se vuelve a la lectura de un caracter.
 
-;----------------------------------------------------------------------------------
+;------------------------------------------------------------------------------------------------
 imprimir_linea:
 	;Se imprime la linea por pantalla  
 	mov EAX,4 	; SYS_WRITE
@@ -182,20 +204,21 @@ imprimir_linea:
 	mov ECX,linea
 	mov EDX,long_Linea
 	int 80h
-
-;Reseteo las posiciones donde voy a escribir los caracteres   ****************************************************************
+;-------------------------------------------------------------------------------------------------
+;Reseteo las posiciones donde voy a escribir los caracteres   
 mov [pos_caracter_en_linea],DWORD char_offset		;pos_caracter_en_linea=57
 mov [hex_pos],DWORD hex_offset						;hex_pos=8
 
 
 ;Escribo en la linea el cont_lineas, exceptuando la primera que ya esta en 000000
-mov EAX,[cont_lineas]				;Cargo el cont_lineas para imprimir la cantidad actual en la linea
+mov EAX,[cont_lineas]				;Cargo el cont_lineas para imprimir la cantidad actual
+
 mov EBX,linea
-call caracter_contador				;Llamo a la funcion que me escribe el cont_lineas en la linea
+call contador				;Llamo a la funcion que me escribe el cont_lineas en la linea
 
 call impr_salto_linea
 
-jmp read_line					;Vuelvo a imprimir una linea    **************************************************************
+jmp read_line					;Vuelvo a imprimir una linea  
 ;---------------------------------------------------------------------------------------------
 
 Eof:
@@ -221,7 +244,7 @@ Eof:
 	mov [EAX], BL
 	inc BYTE [pos_caracter_en_linea]
 ;----------------------------------------------------------------------------------------------
-; se rellenan todos los caracteres faltantes de la ultima linea por espacios en blanco.
+; se rellenan todos los caracteres faltantes de la ultima linea con espacios en blanco.
 rellenar:
 	
 	  ;Reemplazo el caracter en la linea por un espacio
@@ -262,7 +285,7 @@ imprimir_contador:
 
 	mov EAX,[cont_lineas]
 	mov EBX,ultima_Linea_Buffer		;Buffer especial que contiene "000000"
-	call caracter_contador
+	call contador
 
 	mov EAX, 4		;SYS_WRITE
 	mov EBX, 1 		;STDOUT
@@ -273,7 +296,7 @@ imprimir_contador:
 
 	;Cierro el archivo
 	pop EBX
-	mov EAX, 6 		;SYS_CLOSE
+	mov EAX, 6 		;sys_close
 	int 80h
 ;------------------------------------------------------------------------------------------------
 ; Terminaciones, en ebx se guarda el modo (indicadas en el enunciado).
@@ -281,18 +304,19 @@ imprimir_contador:
 tNormal:
 	; Salgo sin error
 	mov EAX,1 ; SYS_EXIT
-	mov EBX,0
+	mov EBX,0 ; 0 Significa terminacion normal.
 	int 80h
+
+tAnormal: 
+	mov     eax, 1	;sys_exit
+    mov     ebx, 1  ;1 significa terminacion anormal
+    int     80h
 
 tErrorArchivoEntrada: 
     mov     eax, 1	;sys_exit
-    mov     ebx, 3 
+    mov     ebx, 2  ;2 significa error por archivo de entrada.
     int     80h
 
-tErrorOtro: 
-    mov     eax, 1	;sys_exit
-    mov     ebx, 2 
-    int     80h
 
 ;------------------------------------------------------------------------------------------------
 mostrarAyuda:
@@ -305,7 +329,7 @@ mostrarAyuda:
 ;------------------------------------------------------------------------------------------------
 
 convertir_a_Hexa:
-;Convierte el caracter en CL a hexa ascii. Los caracteres hexase almacenan 
+;Convierte el caracter en CL a hexa . Los caracteres hexa se almacenan 
 ;en CH y CL EN ORDEN INVERTIDO.Para que los caracteres se impriman en el orden 
 ;correcto se debe usar CX.
 ;RETORNO:
@@ -313,8 +337,7 @@ convertir_a_Hexa:
 ;  CH - Segundo hexa en ascii. 
 
   mov DL,CL		; Se copia el caracter 
-  and DL,00001111b	;se obtienen los ultimos 4 bits
-  
+  and DL,00001111b	;se recuperan los 4 bits menos significativos. 
   call en_hexa	;Convierto 4 bits a hexa (0..9A..F)
   
   mov CH,DL		;Copio segundo hexa en CH. (ORDEN INVERTIDO)
@@ -326,11 +349,11 @@ convertir_a_Hexa:
   mov CL,DL		;Copio primer hexa en CL. (ORDEN INVERTIDO)
   ret			;Fin
   
-;--------------------------------- CARACATER CONTADOR -----------------------------	
+;--------------------------------- - -----------------------------	
 ;Convierte (el numero almacenado en el registro EAX) ascii hexa, para guardarlo
 ; en los primeros 5 lugares del registro EBX (recordar que en este registro esta
 ; el buffer)
-caracter_contador:
+contador:
   add EBX, 5		;Sumo 4 a buffer, se empieza desde la posicion menos significativa
   mov ECX,16		;ECX=16 divisor
 
@@ -350,7 +373,7 @@ bucle_contador:
   
   ret			;Si (Cociente=0): Fin
  
-;----------------------------------------en_Hexa -----------------------------------
+;---------------------------------------------------------------------------
 ;Convierte un caracter almacenado en DL a hexa (0..9A..F)
 en_hexa:
   cmp DL,9				;
@@ -368,7 +391,7 @@ fin_en_hexa:
   ret			;Fin del bucle.
 
   
-  ;--------------------------------------------------------------------
+;---------------------------------------------------------------------------
 caracter_o_punto:
 ;Si el caracter guardado en el registro CL es imprimible, lo retorno.Si no es imprimible
 ;lo transforma en un punto ".".
