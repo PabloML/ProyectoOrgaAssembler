@@ -79,7 +79,7 @@ _start:
 	dec eax	; Se descuenta 1 para no tener en cuenta el nombre del programa. 
 			; Solo se consideran aquellos parametros dados por el usuario.
 	cmp eax, 0				; 0 parametros?
-	je 	tNormal			; No se imprime nada, terminación normal.
+	je 	tErrorOtro			; No se imprime nada, terminación anormal.
 							 
 	; Se pasa a determinar si tiene 1 o mas argumentos.
 	cmp eax, 1
@@ -91,16 +91,15 @@ unArg:
 	pop ebx	; Se extrae el argumento ingresado. 
 	mov ecx, [ebx]
 	cmp cl, '-'
-	je .continuar
+	je continuar
 	push ebx					; Se devuelve el parametro a la pila. 
 	jne	open_file    		; Si no hay un '-' solo puede haber un path
 								; de archivo.
-	.continuar								
+continuar:								
 	inc ebx			; Se saltea el '-'.
 	mov ecx, [ebx]
 	cmp cl, 'h'
 	je mostrarAyuda
-	
 	jne tErrorOtro	; Sino es un -x para consola con numeracion hex, ya es error.
 
 ;--------------------------------------------------------------------------	
@@ -115,7 +114,7 @@ open_file:
     add EAX,2
 	cmp EAX, 0 	;Si al abrir el archivo se produjo un error, el File Descriptor sera -1 y 
 				;por lo que se produce una salida con codigo 2
-	je tErrorArchivoEntrada
+	je tErrorArchivo
 	sub EAX,2
 
 	push EAX			;Se guarda el File Descriptor para cerrar el archivo al terminar.
@@ -311,14 +310,14 @@ mostrarAyuda:
   ;  xor     ebx, ebx 	; ebx=0, sin errores. 
    ; int     80h
     
-tErrorArchivoEntrada: 
+tErrorArchivo: 
     mov     eax, 1	;sys_exit
     mov     ebx, 1 
     int     80h
 
 tErrorOtro: 
     mov     eax, 1	;sys_exit
-    mov     ebx, 3 
+    mov     ebx, 2
     int     80h
 ;--------------------------------------- Caracter_hexa ----------------------------------	
 ; Funcion convertir_a_Hexa: Convierte el caracter en CL a hexa ascii. Los caracteres hexa
