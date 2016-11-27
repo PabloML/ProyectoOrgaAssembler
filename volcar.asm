@@ -330,11 +330,11 @@ mostrarAyuda:
 
 convertir_a_Hexa:
 ;Convierte el caracter en CL a hexa . Los caracteres hexa se almacenan 
-;en CH y CL EN ORDEN INVERTIDO.Para que los caracteres se impriman en el orden 
-;correcto se debe usar CX.
+;en los registros CH y CL.
+;Los caracteres se guardan en orden invertido para que la impresion por pantallas sea correcta.
 ;RETORNO:
-;  CL - Primer hexa en ascii. 
-;  CH - Segundo hexa en ascii. 
+;  CL - Primer hexa. 
+;  CH - Segundo hexa. 
 
   mov DL,CL		; Se copia el caracter 
   and DL,00001111b	;se recuperan los 4 bits menos significativos. 
