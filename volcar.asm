@@ -127,7 +127,7 @@ open_file:
 
     add EAX,2
 	cmp EAX, 0 	;Si al abrir el archivo se produjo un error, el File Descriptor sera -1  
-	je tErrorArchivoEntrada ;salida con error.
+	jle tErrorArchivoEntrada ;salida con error.
 	sub EAX,2
 
 	push EAX			;Se guarda el File Descriptor para cerrar el archivo al terminar.
